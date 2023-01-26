@@ -16,22 +16,22 @@ export type Opperation<T> = {
 export type PackSupportedType = bigint | number | string | boolean | Deno.PointerValue
 //type OpGenerator = (offset: number, littleEndian?: boolean) => Opperation<bigint> | Opperation<number> | Opperation<boolean> | Opperation<Deno.PointerValue>;
 
-type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number/*, alignmentMask?: number*/) => Opperation<T>) & { isPadding?: boolean; size: number }
+type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number /*, alignmentMask?: number*/) => Opperation<T>) & { isPadding?: boolean; size: number }
 
 // const paddingChar = ' '.charCodeAt(0);
 const paddingChar = 0
 
-const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
+const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1 /*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
-      const chars: number[] = [];
+      const chars: number[] = []
       for (let i = 0; i < multiplicator; i++) {
         const char = view.getUint32(offset + i * 4, littleEndian)
         if (char === 0) {
-          break;
+          break
         }
-        chars.push(char);
+        chars.push(char)
       }
       return String.fromCharCode(...chars)
     },
@@ -57,17 +57,17 @@ Op_s32.size = 4
 
 // Need to find python spec about s type
 // : OpGenerator<string> = (offset: number, multiplicator: number)
-const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
+const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1 /*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
-      const chars: number[] = [];
+      const chars: number[] = []
       for (let i = 0; i < multiplicator; i++) {
         const char = view.getUint16(offset + i * 2, littleEndian)
         if (char === 0) {
-          break;
+          break
         }
-        chars.push(char);
+        chars.push(char)
       }
       return String.fromCharCode(...chars)
     },
@@ -91,7 +91,7 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
 }
 Op_s16.size = 2
 
-const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
+const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, multiplicator = 1 /*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
@@ -420,7 +420,7 @@ export class Struct {
           } else if (extra != null) {
             throw new Error(`Unknown Packing type .${extra}s, only .8s, .16s and .32s are supported`)
           }
-          const getter = nextOp(size, littleEndian, times/*, 0*/) // alignmentMask do not pad string
+          const getter = nextOp(size, littleEndian, times /*, 0*/) // alignmentMask do not pad string
           offsets.push(getter)
           size += getter.size
           // if (alignmentMask) {
@@ -479,7 +479,7 @@ export class Struct {
   pack_into(buffer: ArrayBuffer, offset: number, ...values: Array<PackSupportedType>): ArrayBuffer {
     if (ArrayBuffer.isView(buffer)) {
       offset += buffer.byteOffset
-      buffer = buffer.buffer;
+      buffer = buffer.buffer
     }
     const view = new DataView(buffer, offset)
     const max = Math.min(this.offsets.length, values.length)
@@ -497,7 +497,7 @@ export class Struct {
   unpack_from(buffer: ArrayBuffer, offset = 0): Array<PackSupportedType> {
     if (ArrayBuffer.isView(buffer)) {
       offset += buffer.byteOffset
-      buffer = buffer.buffer;
+      buffer = buffer.buffer
     }
     const view = new DataView(buffer, offset)
     const values = []
@@ -513,10 +513,10 @@ export class Struct {
    * The buffer’s size in bytes must be a multiple of the size required by the format, as reflected by calcsize().
    * Each iteration yields a tuple as specified by the format string.
    */
-  *iter_unpack(buffer: ArrayBuffer, offset=0): Generator<PackSupportedType, void, void> {
+  *iter_unpack(buffer: ArrayBuffer, offset = 0): Generator<PackSupportedType, void, void> {
     if (ArrayBuffer.isView(buffer)) {
       offset += buffer.byteOffset
-      buffer = buffer.buffer;
+      buffer = buffer.buffer
     }
     const view = new DataView(buffer, offset)
     const max = this.offsets.length

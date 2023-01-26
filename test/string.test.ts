@@ -61,7 +61,7 @@ Deno.test("string 32bit too large BE", () => {
 })
 
 Deno.test("pad 123 by adding int after it", () => {
-  const expected = new Uint8Array([49, 50, 51, 0, 1, 0, 0, 0]);
+  const expected = new Uint8Array([49, 50, 51, 0, 1, 0, 0, 0])
   assertEqualsBuf(pack("@3si", "123", 1), expected, "text should get padded to 4 bytes")
 })
 
@@ -71,30 +71,30 @@ Deno.test("16 bit string", () => {
 })
 
 Deno.test("8 bit string Drop padding", () => {
-  const struct = new Struct('<10.8s');
+  const struct = new Struct("<10.8s")
   assertEquals(struct.size, 10, "scruct size")
-  const buffer = struct.pack("123");
+  const buffer = struct.pack("123")
   assertEquals(buffer.byteLength, 10, "buffer contains padding")
-  const [txt] = struct.unpack_from(buffer);
-  assertEquals(txt, '123', "padding are gone")
+  const [txt] = struct.unpack_from(buffer)
+  assertEquals(txt, "123", "padding are gone")
 })
 
 Deno.test("16 bit string Drop padding LE", () => {
-  const struct = new Struct('<10.16s');
+  const struct = new Struct("<10.16s")
   assertEquals(struct.size, 20, "scruct size")
-  const buffer = struct.pack("123");
+  const buffer = struct.pack("123")
   assertEquals(buffer.byteLength, 20, "buffer contains padding")
-  const [txt] = struct.unpack_from(buffer);
-  assertEquals(txt, '123', "padding are gone")
+  const [txt] = struct.unpack_from(buffer)
+  assertEquals(txt, "123", "padding are gone")
 })
 
 Deno.test("32 bit string Drop padding LE", () => {
-  const struct = new Struct('<10.32s');
+  const struct = new Struct("<10.32s")
   assertEquals(struct.size, 40, "scruct size")
-  const buffer = struct.pack("123");
+  const buffer = struct.pack("123")
   assertEquals(buffer.byteLength, 40, "buffer contains padding")
-  const [txt] = struct.unpack_from(buffer);
-  assertEquals(txt, '123', "padding are gone")
+  const [txt] = struct.unpack_from(buffer)
+  assertEquals(txt, "123", "padding are gone")
 })
 
 Deno.test("16 bit string LE", () => {
@@ -108,7 +108,7 @@ Deno.test("16 bit string BE", () => {
 })
 
 Deno.test("16 bit string LE EMOJI", () => {
-  const expected =  new Uint8Array([49, 0, 61, 216, 37, 221, 51, 0])
+  const expected = new Uint8Array([49, 0, 61, 216, 37, 221, 51, 0])
   assertEqualsBuf(pack("<4.16s", "1🔥3"), expected, "text should get 16 bit / char")
 })
 

@@ -89,17 +89,17 @@ Deno.test("littleEndian all types unpack", () => {
   //                          ptr,   byte,  short,   int,    long,  longlong, float, double
   //                           1     2       3       4       5       6       7       8
   const struct1 = new Struct("<" + "b7x" + "h6x" + "i4x" + "l4x" + "q" + "f4x" + "d")
-  const data = new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 224, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64]);
+  const data = new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 224, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 64])
   const unpacked = struct1.unpack_from(data)
-  assertEquals(unpacked, [2, 3, 4, 5, 6n, 7, 8], "unpacked 12345678");
+  assertEquals(unpacked, [2, 3, 4, 5, 6n, 7, 8], "unpacked 12345678")
 })
 
 Deno.test("littleEndian all unsigned types unpack", () => {
   // all aligne on 8bytes with padding
   //                           byte,  short,   int,    long,  2long
-  //                           1       2       3       4       5   
+  //                           1       2       3       4       5
   const struct1 = new Struct("<B7x" + "H6x" + "I4x" + "L4x" + "Q")
-  const data = new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const data = new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0])
   const unpacked = struct1.unpack_from(data)
-  assertEquals(unpacked, [1, 2, 3, 4, 5n], "unpacked unsigned 12345");
+  assertEquals(unpacked, [1, 2, 3, 4, 5n], "unpacked unsigned 12345")
 })
