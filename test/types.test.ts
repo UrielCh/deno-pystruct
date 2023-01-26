@@ -1,4 +1,4 @@
-import { assertEquals as assertEqualsOrg, assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
+import { assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
 import { pack } from "../mod.ts"
 import { assertEqualsBuf } from "./common.ts"
 
