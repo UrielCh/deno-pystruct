@@ -18,13 +18,21 @@ export type PackSupportedType = bigint | number | string | boolean | Deno.Pointe
 
 type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number, alignmentMask?: number) => Opperation<T>) & { isPadding?: boolean, size: number };
 
+// const paddingChar = ' '.charCodeAt(0);
+const paddingChar = 0;
+
 const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1, alignmentMask = 0) => {
     return {
         type: 'string',
         get: (view: DataView): string => {
             const of = offset + view.byteOffset;
             const data = view.buffer.slice(of, of + 4 * multiplicator);
-            return String.fromCharCode(...new Uint32Array(data))
+            let str = String.fromCharCode(...new Uint32Array(data))
+            const p = str.indexOf('\0');
+            if (p >= 0) {
+                str = str.slice(0, p);
+            }
+            return str; // .replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
             let strLen = value.length
@@ -32,10 +40,10 @@ const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
                 view.setInt32(offset + 4 * i, value.charCodeAt(i), littleEndian)
             }
             for (let i = strLen; i < multiplicator; i++) {
-                view.setInt32(offset + i * 4, ' '.charCodeAt(0), littleEndian)
+                view.setInt32(offset + i * 4, paddingChar, littleEndian)
             }
             while ( strLen & alignmentMask !- 0) {
-                view.setInt32(offset + strLen * 4, ' '.charCodeAt(0))
+                view.setInt32(offset + strLen * 4, paddingChar)
                 strLen++;
              }
          },
@@ -53,7 +61,12 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
         get: (view: DataView): string => {
             const of = offset + view.byteOffset;
             const data = view.buffer.slice(of, of + multiplicator + multiplicator);
-            return String.fromCharCode(...new Uint16Array(data))
+            let str = String.fromCharCode(...new Uint16Array(data))
+            const p = str.indexOf('\0');
+            if (p >= 0) {
+                str = str.slice(0, p);
+            }
+            return str; //.replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
             let strLen = value.length
@@ -61,11 +74,11 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
                 view.setInt16(offset + i * 2, value.charCodeAt(i), littleEndian)
             }
             for (let i = strLen; i < multiplicator; i++) {
-                view.setInt16(offset + i * 2, ' '.charCodeAt(0), littleEndian)
+                view.setInt16(offset + i * 2, paddingChar, littleEndian)
             }
             // padding ?
             while ( strLen & alignmentMask !- 0) {
-                view.setInt16(offset + strLen * 2, ' '.charCodeAt(0))
+                view.setInt16(offset + strLen * 2, paddingChar)
                 strLen++;
              }
          },
@@ -82,7 +95,12 @@ const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, mul
         get: (view: DataView): string => {
             const of = offset + view.byteOffset;
             const data = view.buffer.slice(of, of + multiplicator);
-            return String.fromCharCode(...new Uint8Array(data))
+            let str = String.fromCharCode(...new Uint8Array(data))
+            const p = str.indexOf('\0');
+            if (p >= 0) {
+                str = str.slice(0, p)
+            }
+            return str; //.replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
             let strLen = value.length
@@ -90,10 +108,10 @@ const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, mul
                 view.setInt8(offset + i, value.charCodeAt(i))
             }
             for (let i = strLen; i < multiplicator; i++) {
-                view.setInt8(offset + i, ' '.charCodeAt(0))
+                view.setInt8(offset + i, paddingChar)
             }
             while ( strLen & alignmentMask !- 0) {
-               view.setInt8(offset + strLen, ' '.charCodeAt(0))
+               view.setInt8(offset + strLen, paddingChar)
                strLen++;
             }
         },
@@ -323,7 +341,8 @@ export class Struct {
                     }
                     break
                 case '@': // native
-                    alignmentMask = 7;
+                    // alignmentMask = 7; // pad every 8 bytes
+                    alignmentMask = 3; // pad every 4 bytes tester on python 64 bites
                     littleEndian = isNativelittleEndian
                     break
                 case '=': // native
