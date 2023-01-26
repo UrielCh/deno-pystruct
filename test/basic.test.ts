@@ -69,7 +69,6 @@ Deno.test("littleEndian all types pack", () => {
   assertEquals(view.getFloat64(56, littleEndian), 8, "view.getFloat64(56)")
 })
 
-
 Deno.test("littleEndian all unsigne types pack", () => {
   // all aligne on 8bytes with padding
   //                            byte,  short,   int,   long,  2long,

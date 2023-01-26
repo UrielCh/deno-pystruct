@@ -25,14 +25,15 @@ const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
   return {
     type: "string",
     get: (view: DataView): string => {
-      const of = offset + view.byteOffset
-      const data = view.buffer.slice(of, of + 4 * multiplicator)
-      let str = String.fromCharCode(...new Uint32Array(data))
-      const p = str.indexOf("\0")
-      if (p >= 0) {
-        str = str.slice(0, p)
+      const chars: number[] = [];
+      for (let i = 0; i < multiplicator; i++) {
+        const char = view.getUint32(offset + i * 4, littleEndian)
+        if (char === 0) {
+          break;
+        }
+        chars.push(char);
       }
-      return str // .replace(/^0+/, "")
+      return String.fromCharCode(...chars)
     },
     set: (view: DataView, value: string) => {
       const strLen = Math.min(value.length, multiplicator)
@@ -60,14 +61,15 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
   return {
     type: "string",
     get: (view: DataView): string => {
-      const of = offset + view.byteOffset
-      const data = view.buffer.slice(of, of + multiplicator + multiplicator)
-      let str = String.fromCharCode(...new Uint16Array(data))
-      const p = str.indexOf("\0")
-      if (p >= 0) {
-        str = str.slice(0, p)
+      const chars: number[] = [];
+      for (let i = 0; i < multiplicator; i++) {
+        const char = view.getUint16(offset + i * 2, littleEndian)
+        if (char === 0) {
+          break;
+        }
+        chars.push(char);
       }
-      return str
+      return String.fromCharCode(...chars)
     },
     set: (view: DataView, value: string) => {
       const strLen = Math.min(value.length, multiplicator)
@@ -288,15 +290,9 @@ const Op_p: OpGenerator<Deno.PointerValue> = (offset: number) => {
 Op_p.size = 8
 
 /** padding */
-const Op_x: OpGenerator<number> = (offset: number) => {
-  return {
-    type: "padding",
-    get: () => 0,
-    set: () => {},
-    size: 1,
-    offset,
-    isPadding: true,
-  } as Opperation<number>
+const Op_x: OpGenerator<number> = () => {
+  // never called
+  return {} as Opperation<number>
 }
 Op_x.isPadding = true
 Op_x.size = 1
