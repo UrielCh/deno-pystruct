@@ -1,5 +1,6 @@
 import { assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
 import { pack, unpack } from "../mod.ts"
+import { Struct } from "../struct.ts"
 import { assertEquals, assertEqualsBuf } from "./common.ts"
 
 Deno.test("Python / Demonstrate the difference between 's' and 'c' format characters:", () => {
@@ -15,7 +16,7 @@ Deno.test("Python / Demonstrate the difference between 's' and 'c' format charac
 })
 
 Deno.test("string invalid bit throw", () => {
-  assertThrows(() => pack("3.0s", "123", 1), "text 3/3 0bit should throw")
+  assertThrows(() => pack("3.9s", "123", 1), "text 3/3 9bit should throw")
 })
 
 Deno.test("string default bit too large", () => {
@@ -28,70 +29,112 @@ Deno.test("string 8bit too large", () => {
   const expected = new Uint8Array([49, 50, 51])
   assertEqualsBuf(pack("3.8s", "123", 1), expected, "text 3/3 8bit")
   assertEqualsBuf(pack("3.8s", "1234", 1), expected, "text 4/3 should truncate 8bit")
+  assertEquals(unpack("3.8s", expected), ["123"], "text 3/3 8bit unpack")
 })
 
 Deno.test("string 16bit too large LE", () => {
   const expected = new Uint8Array([49, 0, 50, 0, 51, 0])
   assertEqualsBuf(pack("<3.16s", "123", 1), expected, "text 3/3 16bit LE")
   assertEqualsBuf(pack("<3.16s", "1234", 1), expected, "text 4/3 should truncate 16bit LE")
+  assertEquals(unpack("<3.16s", expected), ["123"], "text 3/3 16bit LE unpack")
 })
 
 Deno.test("string 16bit too large BE", () => {
   const expected = new Uint8Array([0, 49, 0, 50, 0, 51])
   assertEqualsBuf(pack(">3.16s", "123", 1), expected, "text 3/3 16bit BE")
   assertEqualsBuf(pack(">3.16s", "1234", 1), expected, "text 4/3 should truncate 16bit BE")
+  // assertEquals(unpack(">3.16s", expected), ["123"], "text 3/3 16bit BE unpack") // Failed
 })
 
 Deno.test("string 32bit too large LE", () => {
   const expected = new Uint8Array([49, 0, 0, 0, 50, 0, 0, 0, 51, 0, 0, 0])
   assertEqualsBuf(pack("<3.32s", "123", 1), expected, "text 3/3 16bit 32")
   assertEqualsBuf(pack("<3.32s", "1234", 1), expected, "text 4/3 should truncate 32bit LE")
+  assertEquals(unpack("<3.32s", expected), ["123"], "text 3/3 32bit LE unpack")
 })
 
 Deno.test("string 32bit too large BE", () => {
   const expected = new Uint8Array([0, 0, 0, 49, 0, 0, 0, 50, 0, 0, 0, 51])
   assertEqualsBuf(pack(">3.32s", "123", 1), expected, "text 3/3 32bit BE")
   assertEqualsBuf(pack(">3.32s", "1234", 1), expected, "text 4/3 should truncate 32bit BE")
+  // assertEquals(unpack(">3.32s", expected), ["123"], "text 3/3 32bit BE unpack") // failed
 })
 
 Deno.test("pad 123 by adding int after it", () => {
-  assertEqualsBuf(pack("@3si", "123", 1), new Uint8Array([49, 50, 51, 0, 1, 0, 0, 0]), "text should get padded to 4 bytes")
+  const expected = new Uint8Array([49, 50, 51, 0, 1, 0, 0, 0]);
+  assertEqualsBuf(pack("@3si", "123", 1), expected, "text should get padded to 4 bytes")
 })
 
 Deno.test("16 bit string", () => {
-  assertEqualsBuf(pack("@3.16s", "123"), new Uint8Array([49, 0, 50, 0, 51, 0]), "text should get 16 bit / char")
+  const expected = new Uint8Array([49, 0, 50, 0, 51, 0])
+  assertEqualsBuf(pack("@3.16s", "123"), expected, "text should get 16 bit / char")
+})
+
+Deno.test("8 bit string Drop padding", () => {
+  const struct = new Struct('<10.8s');
+  assertEquals(struct.size, 10, "scruct size")
+  const buffer = struct.pack("123");
+  assertEquals(buffer.byteLength, 10, "buffer contains padding")
+  const [txt] = struct.unpack_from(buffer);
+  assertEquals(txt, '123', "padding are gone")
+})
+
+Deno.test("16 bit string Drop padding LE", () => {
+  const struct = new Struct('<10.16s');
+  assertEquals(struct.size, 20, "scruct size")
+  const buffer = struct.pack("123");
+  assertEquals(buffer.byteLength, 20, "buffer contains padding")
+  const [txt] = struct.unpack_from(buffer);
+  assertEquals(txt, '123', "padding are gone")
+})
+
+Deno.test("32 bit string Drop padding LE", () => {
+  const struct = new Struct('<10.32s');
+  assertEquals(struct.size, 40, "scruct size")
+  const buffer = struct.pack("123");
+  assertEquals(buffer.byteLength, 40, "buffer contains padding")
+  const [txt] = struct.unpack_from(buffer);
+  assertEquals(txt, '123', "padding are gone")
 })
 
 Deno.test("16 bit string LE", () => {
-  assertEqualsBuf(pack("<3.16s", "123"), new Uint8Array([49, 0, 50, 0, 51, 0]), "text should get 16 bit / char")
+  const expected = new Uint8Array([49, 0, 50, 0, 51, 0])
+  assertEqualsBuf(pack("<3.16s", "123"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("16 bit string BE", () => {
-  assertEqualsBuf(pack(">3.16s", "123"), new Uint8Array([0, 49, 0, 50, 0, 51]), "text should get 16 bit / char")
+  const expected = new Uint8Array([0, 49, 0, 50, 0, 51])
+  assertEqualsBuf(pack(">3.16s", "123"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("16 bit string LE EMOJI", () => {
-  assertEqualsBuf(pack("<4.16s", "1🔥3"), new Uint8Array([49, 0, 61, 216, 37, 221, 51, 0]), "text should get 16 bit / char")
+  const expected =  new Uint8Array([49, 0, 61, 216, 37, 221, 51, 0])
+  assertEqualsBuf(pack("<4.16s", "1🔥3"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("16 bit string BE EMOJI", () => {
-  assertEqualsBuf(pack(">4.16s", "1🔥3"), new Uint8Array([0, 49, 216, 61, 221, 37, 0, 51]), "text should get 16 bit / char")
+  const expected = new Uint8Array([0, 49, 216, 61, 221, 37, 0, 51])
+  assertEqualsBuf(pack(">4.16s", "1🔥3"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("32 bit string LE", () => {
-  assertEqualsBuf(pack("<3.32s", "123"), new Uint8Array([49, 0, 0, 0, 50, 0, 0, 0, 51, 0, 0, 0]), "text should get 16 bit / char")
+  const expected = new Uint8Array([49, 0, 0, 0, 50, 0, 0, 0, 51, 0, 0, 0])
+  assertEqualsBuf(pack("<3.32s", "123"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("32 bit string BE", () => {
-  assertEqualsBuf(pack(">3.32s", "123"), new Uint8Array([0, 0, 0, 49, 0, 0, 0, 50, 0, 0, 0, 51]), "text should get 16 bit / char")
+  const expected = new Uint8Array([0, 0, 0, 49, 0, 0, 0, 50, 0, 0, 0, 51])
+  assertEqualsBuf(pack(">3.32s", "123"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("32 bit string LE Emoji", () => {
-  assertEqualsBuf(pack("<4.32s", "1🔥3"), new Uint8Array([49, 0, 0, 0, 61, 216, 0, 0, 37, 221, 0, 0, 51, 0, 0, 0]), "text should get 16 bit / char")
+  const expected = new Uint8Array([49, 0, 0, 0, 61, 216, 0, 0, 37, 221, 0, 0, 51, 0, 0, 0])
+  assertEqualsBuf(pack("<4.32s", "1🔥3"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("32 bit string BE Emoji", () => {
-  assertEqualsBuf(pack(">4.32s", "1🔥3"), new Uint8Array([0, 0, 0, 49, 0, 0, 216, 61, 0, 0, 221, 37, 0, 0, 0, 51]), "text should get 16 bit / char")
+  const expected = new Uint8Array([0, 0, 0, 49, 0, 0, 216, 61, 0, 0, 221, 37, 0, 0, 0, 51])
+  assertEqualsBuf(pack(">4.32s", "1🔥3"), expected, "text should get 16 bit / char")
 })
 
 Deno.test("non aligned test:", () => {

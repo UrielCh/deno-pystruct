@@ -16,12 +16,12 @@ export type Opperation<T> = {
 export type PackSupportedType = bigint | number | string | boolean | Deno.PointerValue
 //type OpGenerator = (offset: number, littleEndian?: boolean) => Opperation<bigint> | Opperation<number> | Opperation<boolean> | Opperation<Deno.PointerValue>;
 
-type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number, alignmentMask?: number) => Opperation<T>) & { isPadding?: boolean; size: number }
+type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number/*, alignmentMask?: number*/) => Opperation<T>) & { isPadding?: boolean; size: number }
 
 // const paddingChar = ' '.charCodeAt(0);
 const paddingChar = 0
 
-const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1, alignmentMask = 0) => {
+const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
@@ -35,17 +35,18 @@ const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
       return str // .replace(/^0+/, "")
     },
     set: (view: DataView, value: string) => {
-      let strLen = Math.min(value.length, multiplicator)
+      const strLen = Math.min(value.length, multiplicator)
       for (let i = 0; i < strLen; i++) {
         view.setInt32(offset + 4 * i, value.charCodeAt(i), littleEndian)
       }
       for (let i = strLen; i < multiplicator; i++) {
         view.setInt32(offset + i * 4, paddingChar, littleEndian)
       }
-      while (strLen & alignmentMask! - 0) {
-        view.setInt32(offset + strLen * 4, paddingChar)
-        strLen++
-      }
+      // no more padding for string
+      // while (strLen & alignmentMask! - 0) {
+      //   view.setInt32(offset + strLen * 4, paddingChar)
+      //   strLen++
+      // }
     },
     offset,
     size: multiplicator * 4,
@@ -55,7 +56,7 @@ Op_s32.size = 4
 
 // Need to find python spec about s type
 // : OpGenerator<string> = (offset: number, multiplicator: number)
-const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1, alignmentMask = 0) => {
+const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
@@ -66,21 +67,21 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
       if (p >= 0) {
         str = str.slice(0, p)
       }
-      return str //.replace(/^0+/, "")
+      return str
     },
     set: (view: DataView, value: string) => {
-      let strLen = Math.min(value.length, multiplicator)
+      const strLen = Math.min(value.length, multiplicator)
       for (let i = 0; i < strLen; i++) {
         view.setInt16(offset + i * 2, value.charCodeAt(i), littleEndian)
       }
       for (let i = strLen; i < multiplicator; i++) {
         view.setInt16(offset + i * 2, paddingChar, littleEndian)
       }
-      // padding ?
-      while (strLen & alignmentMask! - 0) {
-        view.setInt16(offset + strLen * 2, paddingChar)
-        strLen++
-      }
+      // no more padding for string
+      // while (strLen & alignmentMask! - 0) {
+      //   view.setInt16(offset + strLen * 2, paddingChar)
+      //   strLen++
+      // }
     },
     offset,
     size: multiplicator * 2,
@@ -88,7 +89,7 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
 }
 Op_s16.size = 2
 
-const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, multiplicator = 1, alignmentMask = 0) => {
+const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, multiplicator = 1/*, alignmentMask = 0*/) => {
   return {
     type: "string",
     get: (view: DataView): string => {
@@ -99,20 +100,21 @@ const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, mul
       if (p >= 0) {
         str = str.slice(0, p)
       }
-      return str //.replace(/^0+/, "")
+      return str
     },
     set: (view: DataView, value: string) => {
-      let strLen = Math.min(value.length, multiplicator)
+      const strLen = Math.min(value.length, multiplicator)
       for (let i = 0; i < strLen; i++) {
         view.setInt8(offset + i, value.charCodeAt(i))
       }
       for (let i = strLen; i < multiplicator; i++) {
         view.setInt8(offset + i, paddingChar)
       }
-      while (strLen & alignmentMask! - 0) {
-        view.setInt8(offset + strLen, paddingChar)
-        strLen++
-      }
+      // no more padding for string
+      // while (strLen & alignmentMask! - 0) {
+      //   view.setInt8(offset + strLen, paddingChar)
+      //   strLen++
+      // }
     },
     offset,
     size: multiplicator,
@@ -422,7 +424,7 @@ export class Struct {
           } else if (extra != null) {
             throw new Error(`Unknown Packing type .${extra}s, only .8s, .16s and .32s are supported`)
           }
-          const getter = nextOp(size, littleEndian, times, 0) // alignmentMask do not pad string
+          const getter = nextOp(size, littleEndian, times/*, 0*/) // alignmentMask do not pad string
           offsets.push(getter)
           size += getter.size
           // if (alignmentMask) {
