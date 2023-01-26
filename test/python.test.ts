@@ -41,7 +41,6 @@ Deno.test("Python Examples pack(\">h\", 99999)", () => {
 
 
 Deno.test('test aligne should matcvh python', () => {
-    console.log('#'.charCodeAt(0))
     assertEqualsBuf(pack('@ci', '#'.charCodeAt(0), 0x12131415), new Uint8Array([35, 0, 0, 0, 21, 20, 19, 18]).buffer, "pack test as 8 bit string")
     // b'#\x00\x00\x00\x15\x14\x13\x12'
 

@@ -35,7 +35,7 @@ const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
             return str; // .replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
-            let strLen = value.length
+            let strLen = Math.min(value.length, multiplicator)
             for (let i = 0; i < strLen; i++) {
                 view.setInt32(offset + 4 * i, value.charCodeAt(i), littleEndian)
             }
@@ -69,7 +69,7 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
             return str; //.replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
-            let strLen = value.length
+            let strLen = Math.min(value.length, multiplicator)
             for (let i = 0; i < strLen; i++) {
                 view.setInt16(offset + i * 2, value.charCodeAt(i), littleEndian)
             }
@@ -103,7 +103,7 @@ const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, mul
             return str; //.replace(/^0+/, "")
         },
         set: (view: DataView, value: string) => {
-            let strLen = value.length
+            let strLen = Math.min(value.length, multiplicator)
             for (let i = 0; i < strLen; i++) {
                 view.setInt8(offset + i, value.charCodeAt(i))
             }
@@ -424,30 +424,31 @@ export class Struct {
                     } else if (extra != null) {
                         throw new Error(`Unknown Packing type .${extra}s, only .8s, .16s and .32s are supported`)
                     }
-                    const getter = nextOp(size, littleEndian, times, alignmentMask)
+                    const getter = nextOp(size, littleEndian, times, 0) // alignmentMask do not pad string
                     offsets.push(getter)
                     size += getter.size
-                    if (alignmentMask) {
+                    // if (alignmentMask) {
+                    //     while ((size & alignmentMask) != 0) {
+                    //         // console.log('add aliognement from', size, 'check', size & alignment, 'alignment', alignment)
+                    //         size += 1
+                    //     }
+                    // }
+                }
+                else for (let j = 0; j < times; j++) {
+                    // no padding for c b B x
+                    if (alignmentMask && next !== 'c' && next !== 'b' && next !== 'B' && next !== 'x') {
                         while ((size & alignmentMask) != 0) {
                             // console.log('add aliognement from', size, 'check', size & alignment, 'alignment', alignment)
                             size += 1
                         }
                     }
-                }
-                else for (let j = 0; j < times; j++) {
+
                     // (size, littleEndian)
                     if (!nextOp.isPadding) {
                         const getter = nextOp(size, littleEndian)
                         offsets.push(getter)
                     }
                     size += nextOp.size
-                    // aligne ??
-                    if (alignmentMask) {
-                        while ((size & alignmentMask) != 0) {
-                            // console.log('add aliognement from', size, 'check', size & alignment, 'alignment', alignment)
-                            size += 1
-                        }
-                    }
                 }
                 multiplier = ''
                 extra = null
