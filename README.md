@@ -1,11 +1,11 @@
 # deno-pystruct
-An isomorphic implementation of Python struct for Deno, It had been write in a first place to map deno FFI struct.
+An isomorphic implementation of Python struct for Deno, It had been written in the first place to map Deno FFI struct.
 
 ## content
 
-The module contains a Stuct class for Object oriented usage.
+The module contains a Stuct class for Object-oriented usage.
 
-And they non object oriented varient:
+And they non-object-oriented variant:
 
 > `pack(format, v1, v2, ...)`
 Return a bytes object containing the values v1, v2, … packed according to the format string format. The arguments must match the values required by the format exactly.
@@ -26,11 +26,10 @@ Iteratively unpack from the buffer buffer according to the format string format.
 Return the size of the struct (and hence of the bytes object produced by pack(format, ...)) corresponding to the format string format.
 
 
-feal free to use the original doc from [python website](https://docs.python.org/3/library/struct.html)
+Feel free to use the original doc from [python website](https://docs.python.org/3/library/struct.html)
 
 
 ## diffrence from the original python struct:
 
-- pystruct do not support `e` format (16 floating point)
+- pystruct does not support `e` format (16 floating point)
 - pystruct add some extend `s` (string) format, 10.8s will format a string as 10 chars of 8 bit each (**default**), 10.16s will format a string as 10 chars of 16 bit each, 10.32s will format a string as 10 chars of 32 bit each.
-
