@@ -1,4 +1,4 @@
-# deno-pystruct
+# pystruct
 An isomorphic implementation of Python struct for Deno, It had been written in the first place to map Deno FFI struct.
 
 ## content
