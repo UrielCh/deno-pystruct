@@ -479,6 +479,10 @@ export class Struct {
    * @returns the inputed buffer
    */
   pack_into(buffer: ArrayBuffer, offset: number, ...values: Array<PackSupportedType>): ArrayBuffer {
+    if (ArrayBuffer.isView(buffer)) {
+      offset += buffer.byteOffset
+      buffer = buffer.buffer;
+    }
     const view = new DataView(buffer, offset)
     const max = Math.min(this.offsets.length, values.length)
     for (let i = 0; i < max; i++) {
@@ -493,6 +497,10 @@ export class Struct {
    * as reflected by calcsize().
    */
   unpack_from(buffer: ArrayBuffer, offset = 0): Array<PackSupportedType> {
+    if (ArrayBuffer.isView(buffer)) {
+      offset += buffer.byteOffset
+      buffer = buffer.buffer;
+    }
     const view = new DataView(buffer, offset)
     const values = []
     for (const op of this.offsets) {
@@ -507,8 +515,12 @@ export class Struct {
    * The buffer’s size in bytes must be a multiple of the size required by the format, as reflected by calcsize().
    * Each iteration yields a tuple as specified by the format string.
    */
-  *iter_unpack(buffer: ArrayBuffer): Generator<PackSupportedType, void, void> {
-    const view = new DataView(buffer)
+  *iter_unpack(buffer: ArrayBuffer, offset=0): Generator<PackSupportedType, void, void> {
+    if (ArrayBuffer.isView(buffer)) {
+      offset += buffer.byteOffset
+      buffer = buffer.buffer;
+    }
+    const view = new DataView(buffer, offset)
     const max = this.offsets.length
     for (let i = 0; i < max; i++) {
       yield this.offsets[i].get(view)

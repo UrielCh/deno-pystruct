@@ -1,6 +1,9 @@
 {
   "tasks": {
-    "test": "deno test --unstable"
+    "test": "deno test --allow-ffi --unstable",
+    "coverage1": "deno test --allow-ffi --coverage=cov_profile --unstable",
+    "coverage2": "deno coverage cov_profile --include=struct.ts",
+    "coverage3": "deno coverage cov_profile --lcov --output=cov_profile.lcov --include=struct.ts"
   },
   "fmt": {
     "options": {

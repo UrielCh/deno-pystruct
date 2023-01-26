@@ -1,3 +1,4 @@
+import { assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
 import { pack, unpack } from "../mod.ts"
 import { assertEquals, assertEqualsBuf } from "./common.ts"
 
@@ -13,10 +14,20 @@ Deno.test("Python / Demonstrate the difference between 's' and 'c' format charac
   assertEquals(unpacked, "123", "[ack / unpack strung should drop padding \\0")
 })
 
-Deno.test("string 8bit too large", () => {
+Deno.test("string invalid bit throw", () => {
+  assertThrows(() => pack("3.0s", "123", 1), "text 3/3 0bit should throw")
+})
+
+Deno.test("string default bit too large", () => {
   const expected = new Uint8Array([49, 50, 51])
   assertEqualsBuf(pack("3s", "123", 1), expected, "text 3/3 8bit")
   assertEqualsBuf(pack("3s", "1234", 1), expected, "text 4/3 should truncate 8bit")
+})
+
+Deno.test("string 8bit too large", () => {
+  const expected = new Uint8Array([49, 50, 51])
+  assertEqualsBuf(pack("3.8s", "123", 1), expected, "text 3/3 8bit")
+  assertEqualsBuf(pack("3.8s", "1234", 1), expected, "text 4/3 should truncate 8bit")
 })
 
 Deno.test("string 16bit too large LE", () => {

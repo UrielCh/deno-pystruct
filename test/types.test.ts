@@ -2,6 +2,11 @@ import { assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
 import { pack } from "../mod.ts"
 import { assertEqualsBuf } from "./common.ts"
 
+Deno.test("test bool", () => {
+  assertEqualsBuf(pack("?", true), new Uint8Array([1]).buffer, "bool True")
+  assertEqualsBuf(pack("?", false), new Uint8Array([0]).buffer, "bool False")
+})
+
 Deno.test("test int32", () => {
   assertEqualsBuf(pack(">i", 0), new Uint8Array([0, 0, 0, 0]).buffer, "BE 0 as int32")
   assertEqualsBuf(pack(">i", 1), new Uint8Array([0, 0, 0, 1]).buffer, "BE 1 as int32")
