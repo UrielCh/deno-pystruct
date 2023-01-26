@@ -1,5 +1,11 @@
 {
   "tasks": {
     "test": "deno test --unstable"
+  },
+  "fmt": {
+    "options": {
+      "semiColons": false,
+      "lineWidth": 240
+    }
   }
 }
