@@ -63,3 +63,6 @@
  */
 export { Struct } from "./struct.ts"
 export { calcsize, iter_unpack, pack, pack_into, unpack, unpack_from } from "./struct.ts"
+export { iter_unpack as iterUnpack, pack_into as packInto, unpack_from as unpackFrom } from "./struct.ts"
+
+export { type Opperation } from "./struct.ts";

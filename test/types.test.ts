@@ -2,6 +2,10 @@ import { assertThrows } from "https://deno.land/std@0.173.0/testing/asserts.ts"
 import { pack } from "../mod.ts"
 import { assertEqualsBuf } from "./common.ts"
 
+Deno.test("test unknown package", () => {
+  assertThrows(() => pack(">z", 2), "pack unknown package")
+})
+
 Deno.test("test bool", () => {
   assertEqualsBuf(pack("?", true), new Uint8Array([1]).buffer, "bool True")
   assertEqualsBuf(pack("?", false), new Uint8Array([0]).buffer, "bool False")

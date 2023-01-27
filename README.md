@@ -28,5 +28,6 @@ Feel free to use the original doc from [python website](https://docs.python.org/
 
 ## diffrence from the original python struct:
 
-- pystruct does not support `e` format (16 floating point)
+- pystruct does not support `e` format (16 floating point).
 - pystruct add some extend `s` (string) format, 10.8s will format a string as 10 chars of 8 bit each (**default**), 10.16s will format a string as 10 chars of 16 bit each, 10.32s will format a string as 10 chars of 32 bit each.
+- all method / function are also available as they camelCase syntax.

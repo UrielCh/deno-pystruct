@@ -4,21 +4,19 @@ const isNativelittleEndian = endianness() === "LE"
  * stuct builder like python stuct
  * https://docs.python.org/3/library/struct.html
  */
-export type Opperation<T> = {
+export type Opperation<T = unknown> = {
   type: string
   get: (view: DataView) => T
   set: (view: DataView, value: T) => void
   size: number
   offset: number
-  isPadding?: boolean
 }
 
 export type PackSupportedType = bigint | number | string | boolean | Deno.PointerValue
 //type OpGenerator = (offset: number, littleEndian?: boolean) => Opperation<bigint> | Opperation<number> | Opperation<boolean> | Opperation<Deno.PointerValue>;
 
-type OpGenerator<T = any> = ((offset: number, littleEndian?: boolean, multiplicator?: number /*, alignmentMask?: number*/) => Opperation<T>) & { isPadding?: boolean; size: number }
+type OpGenerator<T = unknown> = ((offset: number, littleEndian?: boolean, multiplicator?: number /*, alignmentMask?: number*/) => Opperation<T>) & { size: number }
 
-// const paddingChar = ' '.charCodeAt(0);
 const paddingChar = 0
 
 const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, multiplicator = 1 /*, alignmentMask = 0*/) => {
@@ -280,7 +278,7 @@ Op_d.size = 8
 const Op_p: OpGenerator<Deno.PointerValue> = (offset: number) => {
   return {
     type: "pointer",
-    //get: (view: DataView, buffer: ArrayBuffer) => Deno.UnsafePointer.of(new DataView(buffer, offset)),
+    // hard to test, requiers ffi calls
     get: (view: DataView) => Deno.UnsafePointer.of(new DataView(view.buffer, offset + view.byteOffset)),
     set: (view: DataView, value: Deno.PointerValue) => view.setBigUint64(offset, value as bigint),
     size: 8,
@@ -288,14 +286,6 @@ const Op_p: OpGenerator<Deno.PointerValue> = (offset: number) => {
   } as Opperation<Deno.PointerValue>
 }
 Op_p.size = 8
-
-/** padding */
-const Op_x: OpGenerator<number> = () => {
-  // never called
-  return {} as Opperation<number>
-}
-Op_x.isPadding = true
-Op_x.size = 1
 
 /**
  * This module converts between Deno values and C structs represented as ArrayBuffer objects.
@@ -315,7 +305,7 @@ export class Struct {
     let extra: null | string = null
     for (let i = 0; i < format.length; i++) {
       const next = format[i]
-      let nextOp: OpGenerator | null = null
+      let nextOp: OpGenerator<any> | 'padding' | null = null
       switch (next) {
         case ".":
           extra = ""
@@ -353,7 +343,7 @@ export class Struct {
           littleEndian = false
           break
         case "x": // padding
-          nextOp = Op_x
+          nextOp = 'padding'
           break
         case "c": // char
         case "b": // signed char
@@ -410,7 +400,9 @@ export class Struct {
       }
       if (nextOp) {
         const times = Number(multiplier || "1")
-        if (next === "s") {
+        if (nextOp === "padding") {
+          size += times
+        } else if (next === "s") {
           if (extra === "32") {
             nextOp = Op_s32
           } else if (extra === "16") {
@@ -437,12 +429,9 @@ export class Struct {
                 size += 1
               }
             }
-
             // (size, littleEndian)
-            if (!nextOp.isPadding) {
-              const getter = nextOp(size, littleEndian)
-              offsets.push(getter)
-            }
+            const getter = nextOp(size, littleEndian)
+            offsets.push(getter)
             size += nextOp.size
           }}
         multiplier = ""
@@ -489,6 +478,11 @@ export class Struct {
     return buffer
   }
   /**
+   * camelCase alias for pack_into
+   */
+  packInto = this.pack_into;
+
+  /**
    * Unpack from buffer starting at position offset, according to the format string format.
    * The result is a tuple even if it contains exactly one item. The buffer’s size in bytes,
    * starting at position offset, must be at least the size required by the format,
@@ -508,6 +502,11 @@ export class Struct {
   }
 
   /**
+   * camelCase alias for unpack_from
+   */
+  unpackFrom = this.unpack_from;
+
+  /**
    * Iteratively unpack from the buffer buffer according to the format string format.
    * This function returns an iterator which will read equally sized chunks from the buffer until all its contents have been consumed.
    * The buffer’s size in bytes must be a multiple of the size required by the format, as reflected by calcsize().
@@ -524,6 +523,11 @@ export class Struct {
       yield this.offsets[i].get(view)
     }
   }
+
+  /**
+   * camelCase alias for iter_unpack
+   */
+  iterUnpack = this.iter_unpack;
 }
 
 /**
