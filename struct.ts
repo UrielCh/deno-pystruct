@@ -4,7 +4,7 @@ const isNativelittleEndian = endianness() === "LE"
  * stuct builder like python stuct
  * https://docs.python.org/3/library/struct.html
  */
-export type Opperation<T = unknown> = {
+export type Operation<T = unknown> = {
   type: string
   get: (view: DataView) => T
   set: (view: DataView, value: T) => void
@@ -15,7 +15,7 @@ export type Opperation<T = unknown> = {
 export type PackSupportedType = bigint | number | string | boolean | Deno.PointerValue
 //type OpGenerator = (offset: number, littleEndian?: boolean) => Opperation<bigint> | Opperation<number> | Opperation<boolean> | Opperation<Deno.PointerValue>;
 
-type OpGenerator<T = unknown> = ((offset: number, littleEndian?: boolean, multiplicator?: number /*, alignmentMask?: number*/) => Opperation<T>) & { size: number }
+type OpGenerator<T = unknown> = ((offset: number, littleEndian?: boolean, multiplicator?: number /*, alignmentMask?: number*/) => Operation<T>) & { size: number }
 
 const paddingChar = 0
 
@@ -49,7 +49,7 @@ const Op_s32: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
     },
     offset,
     size: multiplicator * 4,
-  } as Opperation<string>
+  } as Operation<string>
 }
 Op_s32.size = 4
 
@@ -85,7 +85,7 @@ const Op_s16: OpGenerator<string> = (offset: number, littleEndian?: boolean, mul
     },
     offset,
     size: multiplicator * 2,
-  } as Opperation<string>
+  } as Operation<string>
 }
 Op_s16.size = 2
 
@@ -118,7 +118,7 @@ const Op_s8: OpGenerator<string> = (offset: number, _littleEndian?: boolean, mul
     },
     offset,
     size: multiplicator,
-  } as Opperation<string>
+  } as Operation<string>
 }
 Op_s8.size = 1
 
@@ -134,7 +134,7 @@ const Op_b: OpGenerator<number> = (offset: number) => {
     },
     offset,
     size: 1,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_b.size = 1
 
@@ -150,7 +150,7 @@ const Op_B: OpGenerator<number> = (offset: number) => {
     },
     offset,
     size: 1,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_B.size = 1
 
@@ -163,7 +163,7 @@ const Op_Bool: OpGenerator<boolean> = (offset: number) => {
     },
     size: 1,
     offset,
-  } as Opperation<boolean>
+  } as Operation<boolean>
 }
 Op_Bool.size = 1
 
@@ -179,7 +179,7 @@ const Op_h: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     },
     size: 2,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_h.size = 2
 
@@ -195,7 +195,7 @@ const Op_H: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     },
     size: 2,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_H.size = 2
 
@@ -211,7 +211,7 @@ const Op_i: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     },
     size: 4,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_i.size = 4
 
@@ -227,7 +227,7 @@ const Op_I: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     },
     size: 4,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_I.size = 4
 
@@ -238,7 +238,7 @@ const Op_q: OpGenerator<bigint> = (offset: number, littleEndian?: boolean) => {
     set: (view: DataView, value: bigint) => view.setBigInt64(offset, value, littleEndian),
     size: 8,
     offset: offset,
-  } as Opperation<bigint>
+  } as Operation<bigint>
 }
 Op_q.size = 8
 
@@ -249,7 +249,7 @@ const Op_Q: OpGenerator<bigint> = (offset: number, littleEndian?: boolean) => {
     set: (view: DataView, value: bigint) => view.setBigUint64(offset, value, littleEndian),
     size: 8,
     offset,
-  } as Opperation<bigint>
+  } as Operation<bigint>
 }
 Op_Q.size = 8
 
@@ -260,7 +260,7 @@ const Op_f: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     set: (view: DataView, value: number) => view.setFloat32(offset, value, littleEndian),
     size: 4,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_f.size = 4
 
@@ -271,7 +271,7 @@ const Op_d: OpGenerator<number> = (offset: number, littleEndian?: boolean) => {
     set: (view: DataView, value: number) => view.setFloat64(offset, value, littleEndian),
     size: 8,
     offset,
-  } as Opperation<number>
+  } as Operation<number>
 }
 Op_d.size = 8
 
@@ -283,7 +283,7 @@ const Op_p: OpGenerator<Deno.PointerValue> = (offset: number) => {
     set: (view: DataView, value: Deno.PointerValue) => view.setBigUint64(offset, value as bigint),
     size: 8,
     offset,
-  } as Opperation<Deno.PointerValue>
+  } as Operation<Deno.PointerValue>
 }
 Op_p.size = 8
 
@@ -293,18 +293,21 @@ Op_p.size = 8
  * see python doc for usage https://docs.python.org/3/library/struct.html
  */
 export class Struct {
-  readonly offsets: Opperation<any>[]
+  // deno-lint-ignore no-explicit-any
+  readonly offsets: Operation<any>[]
   public readonly size: number
 
   constructor(public readonly format: string) {
     let littleEndian = isNativelittleEndian
     let alignmentMask = 0
-    const offsets: Opperation<any>[] = []
+    // deno-lint-ignore no-explicit-any
+    const offsets: Operation<any>[] = []
     let size = 0
     let multiplier = ""
     let extra: null | string = null
     for (let i = 0; i < format.length; i++) {
       const next = format[i]
+      // deno-lint-ignore no-explicit-any
       let nextOp: OpGenerator<any> | 'padding' | null = null
       switch (next) {
         case ".":
@@ -421,7 +424,8 @@ export class Struct {
           //         size += 1
           //     }
           // }
-        } else {for (let j = 0; j < times; j++) {
+        } else {
+          for (let j = 0; j < times; j++) {
             // no padding for c b B x
             if (alignmentMask && next !== "c" && next !== "b" && next !== "B" && next !== "x") {
               while ((size & alignmentMask) != 0) {
@@ -433,7 +437,8 @@ export class Struct {
             const getter = nextOp(size, littleEndian)
             offsets.push(getter)
             size += nextOp.size
-          }}
+          }
+        }
         multiplier = ""
         extra = null
       }
